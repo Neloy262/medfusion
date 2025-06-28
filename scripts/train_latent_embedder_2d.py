@@ -15,7 +15,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from medical_diffusion.data.datamodules import SimpleDataModule
 from medical_diffusion.data.datasets import AIROGSDataset, MSIvsMSS_2_Dataset, CheXpert_2_Dataset
 from medical_diffusion.models.embedders.latent_embedders import VQVAE, VQGAN, VAE, VAEGAN
-
+from medical_diffusion.data.datasets.dataset_simple_2d import SimpleDataset2D
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -46,31 +46,32 @@ if __name__ == "__main__":
     #     path_root='/mnt/hdd/datasets/pathology/kather_msi_mss_2/train/'
     # )
 
-    ds_3 = CheXpert_2_Dataset( #  256x256
-        # image_resize=128, 
-        augment_horizontal_flip=False,
-        augment_vertical_flip=False,
-        # path_root = '/home/gustav/Documents/datasets/CheXpert/preprocessed_tianyu'
-        path_root = '/mnt/hdd/datasets/chest/CheXpert/ChecXpert-v10/preprocessed_tianyu'
-    )
+    # ds_3 = CheXpert_2_Dataset( #  256x256
+    #     # image_resize=128, 
+    #     augment_horizontal_flip=False,
+    #     augment_vertical_flip=False,
+    #     # path_root = '/home/gustav/Documents/datasets/CheXpert/preprocessed_tianyu'
+    #     path_root = '/mnt/hdd/datasets/chest/CheXpert/ChecXpert-v10/preprocessed_tianyu'
+    # )
 
     # ds = ConcatDataset([ds_1, ds_2, ds_3])
-   
+    ds_simple = SimpleDataset2D(path_root="/home/mahmud/Downloads/DR/train_images_resized_512/")
+    # print(ds_simple.__len__())
     dm = SimpleDataModule(
-        ds_train = ds_3,
-        batch_size=8, 
+        ds_train = ds_simple,
+        batch_size=2,
         # num_workers=0,
         pin_memory=True
-    ) 
+    )
     
 
     # ------------ Initialize Model ------------
     model = VAE(
-        in_channels=3, 
-        out_channels=3, 
+        in_channels=3,
+        out_channels=3,
         emb_channels=8,
         spatial_dims=2,
-        hid_chs =    [ 64, 128, 256,  512], 
+        hid_chs =    [ 64, 128, 256,  512],
         kernel_sizes=[ 3,  3,   3,    3],
         strides =    [ 1,  2,   2,    2],
         deep_supervision=1,
@@ -83,8 +84,8 @@ if __name__ == "__main__":
     # model.load_pretrained(Path.cwd()/'runs/2022_12_01_183752_patho_vae/last.ckpt', strict=True)
 
     # model = VAEGAN(
-    #     in_channels=3, 
-    #     out_channels=3, 
+    #     in_channels=3,
+    #     out_channels=3,
     #     emb_channels=8,
     #     spatial_dims=2,
     #     hid_chs =    [ 64, 128, 256,  512],
@@ -99,8 +100,8 @@ if __name__ == "__main__":
 
 
     # model = VQVAE(
-    #     in_channels=3, 
-    #     out_channels=3, 
+    #     in_channels=3,
+    #     out_channels=3,
     #     emb_channels=4,
     #     num_embeddings = 8192,
     #     spatial_dims=2,
@@ -114,8 +115,8 @@ if __name__ == "__main__":
 
 
     # model = VQGAN(
-    #     in_channels=3, 
-    #     out_channels=3, 
+    #     in_channels=3,
+    #     out_channels=3,
     #     emb_channels=4,
     #     num_embeddings = 8192,
     #     spatial_dims=2,
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     
 
     # -------------- Training Initialization ---------------
-    to_monitor = "train/L1"  # "val/loss" 
+    to_monitor = "train/L1"  # "val/loss"
     min_max = "min"
     save_and_sample_every = 50
 
@@ -162,10 +163,10 @@ if __name__ == "__main__":
         # callbacks=[checkpointing, early_stopping],
         enable_checkpointing=True,
         check_val_every_n_epoch=1,
-        log_every_n_steps=save_and_sample_every, 
+        log_every_n_steps=save_and_sample_every,
         auto_lr_find=False,
         # limit_train_batches=1000,
-        limit_val_batches=0, # 0 = disable validation - Note: Early Stopping no longer available 
+        limit_val_batches=0, # 0 = disable validation - Note: Early Stopping no longer available
         min_epochs=100,
         max_epochs=1001,
         num_sanity_val_steps=2,
